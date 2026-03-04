@@ -1,0 +1,49 @@
+{
+  "name": "inf-dep-gen",
+  "version": "0.1.0",
+  "description": "Infrastructure Deployment Generator — multi-format (ARM, Bicep, Terraform) template generation with AI-powered planning and validation",
+  "type": "module",
+  "main": "src/backend/server.js",
+  "scripts": {
+    "start": "node src/backend/server.js",
+    "dev": "nodemon src/backend/server.js",
+    "seed": "node src/backend/scripts/seed-data.js",
+    "test": "node tests/run-tests.js",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "azure",
+    "arm-templates",
+    "bicep",
+    "terraform",
+    "infrastructure-as-code",
+    "lvm",
+    "cosmos-db",
+    "claude-ai"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@azure/arm-compute": "^22.1.0",
+    "@azure/arm-network": "^33.4.0",
+    "@azure/arm-resources": "^7.0.0",
+    "@azure/cosmos": "^4.2.0",
+    "@azure/identity": "^4.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.1.0",
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9"
+  }
+}

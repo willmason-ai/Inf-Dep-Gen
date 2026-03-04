@@ -1,0 +1,72 @@
+# ============================================================================
+# Infrastructure Deployment Generator — .gitignore
+# ============================================================================
+
+# --- Secrets & Environment (CRITICAL — never commit) ---
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+*.pem
+*.key
+*.pfx
+*.p12
+credentials.json
+secrets.json
+service-principal.json
+**/appsettings.*.json
+!**/appsettings.json
+
+# --- Azure ---
+.azure/
+*.publishsettings
+ServiceDefinition.csdef
+
+# --- Dependencies ---
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+package-lock.json
+
+# --- Build output ---
+dist/
+build/
+*.js.map
+.next/
+out/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# --- Logs (local only — production logs go to Cosmos DB) ---
+logs/*.log
+*.log
+npm-debug.log*
+
+# --- Test coverage ---
+coverage/
+.coverage
+htmlcov/
+.nyc_output/
+
+# --- Temporary files ---
+*.tmp
+*.temp
+*.bak
+*.orig
+~$*
