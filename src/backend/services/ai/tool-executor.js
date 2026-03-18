@@ -86,6 +86,8 @@ const requiredParams = {
   deploy_arm_template: ['hostname'],
   apply_tags_to_server: ['hostname'],
   confirm_approval: ['approval_id', 'action'],
+  get_avs_capacity: ['sku', 'node_count'],
+  create_companion_vm: ['hostname', 'companionRole', 'os', 'sku'],
 };
 
 function validateParams(toolName, input) {
@@ -766,6 +768,82 @@ const toolHandlers = {
     }
 
     return JSON.stringify({ error: `Unknown action: ${action}. Use "approve", "reject", or "status".` });
+  },
+
+  async update_avs_config(input) {
+    let avsConfig;
+    try {
+      avsConfig = await import('../avs-config.js');
+    } catch (error) {
+      return JSON.stringify({ error: 'AVS config service not available', message: error.message });
+    }
+
+    const { config: existing } = await avsConfig.getConfig();
+    const merged = deepMerge(existing, input);
+
+    // Handle segments specially
+    if (input.nsxtSegments) {
+      const { randomUUID } = await import('crypto');
+      merged.nsxtSegments = input.nsxtSegments.map(s => ({
+        id: s.id || randomUUID(),
+        name: s.name || '',
+        cidr: s.cidr || '',
+        gatewayAddress: s.gatewayAddress || '',
+        dhcpEnabled: s.dhcpEnabled || false,
+        dhcpRange: s.dhcpRange || '',
+        dnsServers: s.dnsServers || [],
+        tier1Gateway: s.tier1Gateway || 'default',
+        autoName: s.autoName ?? false,
+      }));
+    }
+
+    const result = await avsConfig.saveConfig(merged);
+    return JSON.stringify({
+      message: 'AVS configuration updated successfully',
+      validation: result.validation,
+      config: result.config,
+    }, null, 2);
+  },
+
+  async get_avs_capacity({ sku, node_count }) {
+    let avsConfig;
+    try {
+      avsConfig = await import('../avs-config.js');
+    } catch (error) {
+      return JSON.stringify({ error: 'AVS config service not available' });
+    }
+    const result = avsConfig.calculateCapacity(sku, node_count);
+    return JSON.stringify(result, null, 2);
+  },
+
+  async create_companion_vm(input) {
+    let companionVm;
+    try {
+      companionVm = await import('../companion-vm.js');
+    } catch (error) {
+      return JSON.stringify({ error: 'Companion VM service not available', message: error.message });
+    }
+
+    try {
+      const spec = await companionVm.createCompanionSpec(input);
+      return JSON.stringify({
+        message: `Companion VM "${spec.hostname}" created successfully`,
+        spec,
+      }, null, 2);
+    } catch (error) {
+      return JSON.stringify({ error: error.message });
+    }
+  },
+
+  async list_available_subnets() {
+    let companionVm;
+    try {
+      companionVm = await import('../companion-vm.js');
+    } catch (error) {
+      return JSON.stringify({ error: 'Companion VM service not available' });
+    }
+    const subnets = await companionVm.getAvailableSubnets();
+    return JSON.stringify({ count: subnets.length, subnets }, null, 2);
   },
 
   async update_networking_config(input) {

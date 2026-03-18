@@ -5,7 +5,7 @@ import AiChat from './pages/AiChat';
 import Login from './pages/Login';
 import { getMe, logout, getToken, clearToken } from './lib/api';
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.3.0';
 
 function Nav({ username, onLogout }) {
   const linkClass = ({ isActive }) =>

@@ -5,6 +5,8 @@ import ArtifactViewer from '../components/ArtifactViewer';
 import ImportReview from '../components/ImportReview';
 import NamingConvention from '../components/NamingConvention';
 import NetworkingConfig from '../components/NetworkingConfig';
+import AvsConfig from '../components/AvsConfig';
+import CompanionVMForm from '../components/CompanionVMForm';
 
 // ---------------------------------------------------------------------------
 // Collapsible Section wrapper
@@ -73,6 +75,9 @@ export default function Dashboard() {
   const [importData, setImportData] = useState(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Companion VM creation
+  const [showCompanionForm, setShowCompanionForm] = useState(false);
 
   useEffect(() => {
     loadServers();
@@ -160,6 +165,7 @@ export default function Dashboard() {
   // --- Derived data ---
   const odbServers = servers.filter(s => s.serverType === 'odb');
   const sqlServers = servers.filter(s => s.serverType === 'sql');
+  const companionServers = servers.filter(s => s.serverType === 'companion');
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -213,15 +219,33 @@ export default function Dashboard() {
         <Section
           id="compute"
           title="Compute"
-          subtitle={loading ? 'Loading...' : `Companion VMs & managed servers \u00b7 ${servers.length} total \u00b7 ${odbServers.length} ODB \u00b7 ${sqlServers.length} SQL`}
+          subtitle={loading ? 'Loading...' : `${servers.length} total \u00b7 ${companionServers.length} Companion \u00b7 ${odbServers.length} ODB \u00b7 ${sqlServers.length} SQL`}
           icon={<svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" /></svg>}
           expanded={expandedSections.has('compute')}
           onToggle={toggleSection}
+          headerActions={
+            <button
+              onClick={() => setShowCompanionForm(true)}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-1.5"
+            >
+              <span>+ Companion VM</span>
+            </button>
+          }
         >
           {loading ? (
             <div className="text-gray-500 text-sm py-4">Loading servers...</div>
           ) : (
             <div className="space-y-6">
+              {/* Companion VMs */}
+              <ServerSection
+                title="Companion VMs (Jumpboxes, DNS, Backup)"
+                servers={companionServers}
+                expandedServer={expandedServer}
+                serverDetail={serverDetail}
+                generating={generating}
+                onToggle={toggleServer}
+                onGenerate={handleGenerate}
+              />
               {/* ODB Servers */}
               <ServerSection
                 title="ODB Servers (RHEL-8)"
@@ -254,24 +278,10 @@ export default function Dashboard() {
           title="AVS (Azure VMware Solution)"
           subtitle="Private cloud provisioning, cluster sizing, NSX-T segments, HCX configuration"
           icon={<svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>}
-          badge="Coming Soon"
           expanded={expandedSections.has('avs')}
           onToggle={toggleSection}
         >
-          <PlaceholderSection
-            title="AVS"
-            description="Plan and deploy Azure VMware Solution private clouds. Manage /22 address block allocation, cluster sizing (AV36/AV36P/AV52/AV64 hosts), NSX-T segment planning, and HCX configuration for workload migration from on-premises."
-            features={[
-              'Private cloud /22 CIDR planning',
-              'Cluster sizing & host SKU selection',
-              'NSX-T segment planning (workload networks)',
-              'HCX service mesh & migration waves',
-              'ExpressRoute circuit connection to hub',
-              'Global Reach to on-prem circuit',
-              'vSAN capacity planning',
-              'Auto-naming with active convention',
-            ]}
-          />
+          <AvsConfig />
         </Section>
 
         {/* ============================================================ */}
@@ -319,6 +329,14 @@ export default function Dashboard() {
         <ArtifactViewer
           artifact={artifact}
           onClose={() => setArtifact(null)}
+        />
+      )}
+
+      {/* Companion VM Form Modal */}
+      {showCompanionForm && (
+        <CompanionVMForm
+          onCreated={loadServers}
+          onClose={() => setShowCompanionForm(false)}
         />
       )}
 
@@ -377,6 +395,7 @@ function ServerSection({ title, servers, expandedServer, serverDetail, generatin
 
 function ServerRow({ server, isExpanded, detail, generating, onToggle, onGenerate }) {
   const isOdb = server.serverType === 'odb';
+  const isCompanion = server.serverType === 'companion';
   const statusBadge = server.skuDeficient
     ? 'bg-red-100 text-red-700'
     : server.deficiencyCount > 0

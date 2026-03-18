@@ -6,6 +6,50 @@ Format: [Semantic Versioning](https://semver.org/) — MAJOR.MINOR.PATCH
 
 ---
 
+## [0.3.0] — 2026-03-18
+
+### Added — AVS Section, Compute Enhancements, Excel Intelligence
+
+**AVS (Azure VMware Solution) — 6 new files**
+- `src/backend/services/avs-config.js` — AVS config CRUD, /22 validation (cross-references networking IP plan), vSAN capacity math (AV36/AV36P/AV52/AV64)
+- `src/backend/services/avs-bicep-generator.js` — Bicep + ARM JSON for Microsoft.AVS/privateClouds, ER authorizations, hub connections, Global Reach
+- `src/backend/api/avs.js` — REST API: config CRUD, validate, capacity calc, generate bicep/arm
+- `src/frontend/src/components/AvsConfig.jsx` — 5-tab AVS component: Private Cloud, NSX-T Segments, HCX, Connectivity, Templates
+- `src/frontend/src/components/avs/ClusterSizer.jsx` — Cluster sizing card with SKU selector, node count, live capacity display
+- `src/frontend/src/components/avs/SegmentEditor.jsx` — NSX-T segment row editor with CIDR validation, DHCP, T1 gateway
+- `src/frontend/src/components/avs/HcxConfig.jsx` — HCX service mesh config, migration wave management with VM→segment mapping
+
+**Compute Enhancements — 2 new files**
+- `src/backend/services/companion-vm.js` — Companion VM service: CRUD, subnet integration from networking config, dependency graph
+- `src/frontend/src/components/CompanionVMForm.jsx` — Modal form for creating jumpbox/DNS/backup VMs with subnet picker
+- New `companion` server type alongside ODB/SQL
+- Batch ARM generation endpoint (`POST /servers/batch/arm`)
+- Server creation (`POST /servers`) and update (`PUT /servers/:hostname`) endpoints
+- Subnet assignment (`POST /servers/:hostname/subnet`)
+
+**Excel Intelligence — 2 new files**
+- `src/backend/services/excel-sheet-detector.js` — Header-based auto-detection of sheet types (compute-bom, storage-bom, ip-plan, migration-wave, host-sizing)
+- `src/backend/services/ip-plan-comparator.js` — Compare imported IP plans against networking config with merge support
+
+**AI Tools — 4 new tools**
+- `update_avs_config` — Populate AVS config from natural language
+- `get_avs_capacity` — Calculate vSAN capacity for given SKU/node count
+- `create_companion_vm` — Create companion VM specs via chat
+- `list_available_subnets` — List networking config subnets available for VM deployment
+
+**Dashboard**
+- Replaced AVS "Coming Soon" placeholder with live `<AvsConfig />` component
+- Companion VM subsection in Compute with "+ Companion VM" button
+- Companion VM counts in section subtitle
+
+### Cross-Section Data Flow
+- AVS /22 block auto-syncs to networking config's IP plan on save
+- AVS validation cross-references all networking ranges for overlap detection
+- Companion VMs can be assigned to subnets from the networking config
+- Excel sheet detector enables future multi-type import (IP plan, migration waves, host sizing)
+
+---
+
 ## [0.2.0] — 2026-03-18
 
 ### Added — Networking Section

@@ -1,6 +1,6 @@
 {
   "name": "inf-dep-gen",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Infrastructure Deployment Generator — multi-format (ARM, Bicep, Terraform) template generation with AI-powered planning and validation",
   "type": "module",
   "main": "src/backend/server.js",

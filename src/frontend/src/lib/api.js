@@ -223,3 +223,63 @@ export const resetNetworkingConfig = (region) =>
     method: 'POST',
     body: JSON.stringify({ region }),
   });
+
+// ---------------------------------------------------------------------------
+// AVS
+// ---------------------------------------------------------------------------
+export const getAvsConfig = () => fetchJSON('/avs');
+
+export const saveAvsConfig = (config) =>
+  fetchJSON('/avs', {
+    method: 'POST',
+    body: JSON.stringify({ config }),
+  });
+
+export const validateAvsTopology = (config) =>
+  fetchJSON('/avs/validate', {
+    method: 'POST',
+    body: JSON.stringify({ config }),
+  });
+
+export const getAvsCapacity = (sku, nodeCount) =>
+  fetchJSON('/avs/capacity', {
+    method: 'POST',
+    body: JSON.stringify({ sku, nodeCount }),
+  });
+
+export const generateAvsBicep = () =>
+  fetchJSON('/avs/generate/bicep', { method: 'POST' });
+
+export const generateAvsArm = () =>
+  fetchJSON('/avs/generate/arm', { method: 'POST' });
+
+export const resetAvsConfig = (region) =>
+  fetchJSON('/avs/reset', {
+    method: 'POST',
+    body: JSON.stringify({ region }),
+  });
+
+export const getAvsHostSkus = () => fetchJSON('/avs/host-skus');
+
+// ---------------------------------------------------------------------------
+// Companion VMs / Server Management
+// ---------------------------------------------------------------------------
+export const getAvailableSubnets = () => fetchJSON('/servers/subnets');
+
+export const createServer = (spec) =>
+  fetchJSON('/servers', {
+    method: 'POST',
+    body: JSON.stringify(spec),
+  });
+
+export const updateServer = (hostname, updates) =>
+  fetchJSON(`/servers/${hostname}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+
+export const batchGenerateArm = (hostnames, filter) =>
+  fetchJSON('/servers/batch/arm', {
+    method: 'POST',
+    body: JSON.stringify({ hostnames, filter }),
+  });

@@ -11,6 +11,7 @@ import azureRouter from './azure.js';
 import importRouter from './import.js';
 import namingConventionRouter from './naming-convention.js';
 import networkingRouter from './networking.js';
+import avsRouter from './avs.js';
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use('/azure', azureRouter);
 router.use('/import', importRouter);
 router.use('/naming-convention', namingConventionRouter);
 router.use('/networking', networkingRouter);
+router.use('/avs', avsRouter);
 
 export default router;

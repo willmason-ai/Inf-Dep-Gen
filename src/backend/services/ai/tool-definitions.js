@@ -287,6 +287,101 @@ export const tools = [
   },
 
   // ==========================================================================
+  // AVS Configuration
+  // ==========================================================================
+  {
+    name: 'update_avs_config',
+    description: 'Update the AVS (Azure VMware Solution) configuration. Use when the user describes their AVS private cloud setup, /22 address block, cluster sizing, NSX-T segments, or HCX migration plans.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        region: { type: 'string', description: 'Azure region' },
+        privateCloud: {
+          type: 'object',
+          properties: {
+            addressBlock: { type: 'string', description: 'AVS /22 CIDR block' },
+            sku: { type: 'string', enum: ['AV36', 'AV36P', 'AV52', 'AV64'] },
+            nodeCount: { type: 'number', description: 'Number of hosts (min 3)' },
+            clusterName: { type: 'string' },
+          },
+        },
+        nsxtSegments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              cidr: { type: 'string' },
+              dhcpEnabled: { type: 'boolean' },
+            },
+          },
+        },
+        connectivity: {
+          type: 'object',
+          properties: {
+            hubConnection: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                hubGatewayResourceId: { type: 'string' },
+              },
+            },
+            globalReach: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                onPremCircuitResourceId: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_avs_capacity',
+    description: 'Calculate vSAN capacity for an AVS cluster given a host SKU and node count. Returns total cores, RAM, vSAN raw/usable storage.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        sku: { type: 'string', enum: ['AV36', 'AV36P', 'AV52', 'AV64'], description: 'Host SKU' },
+        node_count: { type: 'number', description: 'Number of hosts (minimum 3)' },
+      },
+      required: ['sku', 'node_count'],
+    },
+  },
+
+  // ==========================================================================
+  // Companion VM Management
+  // ==========================================================================
+  {
+    name: 'create_companion_vm',
+    description: 'Create a new companion VM spec (jumpbox, DNS forwarder, or backup server). These are simpler VMs that support the AVS deployment.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        hostname: { type: 'string', description: 'VM hostname' },
+        companionRole: { type: 'string', enum: ['jumpbox', 'dns-forwarder', 'backup-server', 'utility'] },
+        os: { type: 'string', description: 'OS (e.g., "Ubuntu 22.04", "RHEL-8", "Windows Server 2022")' },
+        sku: { type: 'string', description: 'VM SKU (e.g., "Standard_D2s_v5")' },
+        subnetId: { type: 'string', description: 'Optional subnet ID from networking config' },
+        dependsOn: { type: 'array', items: { type: 'string' }, description: 'Hostnames this VM serves' },
+      },
+      required: ['hostname', 'companionRole', 'os', 'sku'],
+    },
+  },
+  {
+    name: 'list_available_subnets',
+    description: 'List available subnets from the networking configuration that VMs can be deployed to.',
+    input_schema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+
+  // ==========================================================================
   // Networking Configuration
   // ==========================================================================
   {

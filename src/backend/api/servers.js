@@ -13,6 +13,15 @@ import { generateNsgRules } from '../services/nsg-generator.js';
 import { generateTagScript } from '../services/tag-generator.js';
 import { saveArtifact } from '../services/artifact-store.js';
 import config from '../config/index.js';
+import {
+  createCompanionSpec,
+  updateCompanionSpec,
+  getAvailableSubnets,
+  assignSubnet,
+  COMPANION_ROLES,
+  COMPANION_OS_OPTIONS,
+  COMPANION_SKU_OPTIONS,
+} from '../services/companion-vm.js';
 
 const router = Router();
 
@@ -59,8 +68,9 @@ router.get('/', async (req, res, next) => {
     const specs = await getSpecs();
     const servers = specs.map(s => ({
       hostname: s.hostname,
-      role: s.role,
+      role: s.companionRole || s.role,
       serverType: s.serverType,
+      companionRole: s.companionRole,
       os: s.os,
       region: s.region,
       regionCode: s.regionCode,
@@ -68,11 +78,13 @@ router.get('/', async (req, res, next) => {
       currentSku: s.currentSku,
       skuDeficient: s.skuDeficient,
       resourceGroup: s.resourceGroup,
+      subnetName: s.subnetName,
+      dependsOn: s.dependsOn,
       totalDisks: s.volumeGroups
         ? s.volumeGroups.reduce((sum, vg) => sum + (vg.diskCount || 0), 0)
         : s.diskGroups
           ? s.diskGroups.reduce((sum, dg) => sum + (typeof dg.diskCount === 'number' ? dg.diskCount : 0), 0)
-          : 0,
+          : (s.dataDisks || []).length,
       tags: s.tags,
       deficiencyCount: (s.deficiencies || []).length,
     }));
@@ -82,6 +94,98 @@ router.get('/', async (req, res, next) => {
       environment: config.environment,
       servers,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/servers/subnets — Get available subnets from networking config
+// ---------------------------------------------------------------------------
+router.get('/subnets', async (req, res, next) => {
+  try {
+    const subnets = await getAvailableSubnets();
+    res.json({ subnets, roles: COMPANION_ROLES, osOptions: COMPANION_OS_OPTIONS, skuOptions: COMPANION_SKU_OPTIONS });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/servers — Create a new server spec
+// ---------------------------------------------------------------------------
+router.post('/', async (req, res, next) => {
+  try {
+    const spec = await createCompanionSpec(req.body);
+    // Clear cache so the new spec appears in listings
+    cachedSpecs = null;
+    cachedSpecsAt = 0;
+    res.status(201).json(spec);
+  } catch (error) {
+    if (error.message.includes('already exists') || error.message.includes('required')) {
+      return res.status(400).json({ error: error.message });
+    }
+    next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PUT /api/servers/:hostname — Update server spec
+// ---------------------------------------------------------------------------
+router.put('/:hostname', async (req, res, next) => {
+  try {
+    const spec = await updateCompanionSpec(req.params.hostname, req.body);
+    cachedSpecs = null;
+    cachedSpecsAt = 0;
+    res.json(spec);
+  } catch (error) {
+    if (error.message.includes('No spec found')) {
+      return res.status(404).json({ error: error.message });
+    }
+    next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/servers/:hostname/subnet — Assign VM to subnet
+// ---------------------------------------------------------------------------
+router.post('/:hostname/subnet', async (req, res, next) => {
+  try {
+    const { subnetId } = req.body;
+    if (!subnetId) return res.status(400).json({ error: 'Missing subnetId' });
+    const spec = await assignSubnet(req.params.hostname, subnetId);
+    cachedSpecs = null;
+    cachedSpecsAt = 0;
+    res.json(spec);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/servers/batch/arm — Batch ARM generation
+// ---------------------------------------------------------------------------
+router.post('/batch/arm', async (req, res, next) => {
+  try {
+    const { hostnames, filter } = req.body;
+    let specs = await getSpecs();
+
+    if (filter && filter !== 'all') {
+      specs = specs.filter(s => s.serverType === filter);
+    } else if (hostnames?.length) {
+      specs = specs.filter(s => hostnames.includes(s.hostname));
+    }
+
+    const results = specs.map(spec => {
+      try {
+        const result = generateArmTemplate(spec);
+        return { hostname: spec.hostname, success: true, summary: result.summary };
+      } catch (err) {
+        return { hostname: spec.hostname, success: false, error: err.message };
+      }
+    });
+
+    res.json({ count: results.length, results });
   } catch (error) {
     next(error);
   }
