@@ -768,6 +768,47 @@ const toolHandlers = {
     return JSON.stringify({ error: `Unknown action: ${action}. Use "approve", "reject", or "status".` });
   },
 
+  async update_networking_config(input) {
+    let networkingConfig;
+    try {
+      networkingConfig = await import('../networking-config.js');
+    } catch (error) {
+      return JSON.stringify({ error: 'Networking config service not available', message: error.message });
+    }
+
+    // Load existing config
+    const { config: existing } = await networkingConfig.getConfig();
+
+    // Deep merge provided fields into existing config
+    const merged = deepMerge(existing, input);
+
+    // Handle subnets specially — if provided, they replace (with IDs added)
+    if (input.subnets) {
+      const { randomUUID } = await import('crypto');
+      merged.subnets = input.subnets.map(s => ({
+        id: s.id || randomUUID(),
+        purpose: s.purpose || 'custom',
+        name: s.name || (s.purpose === 'gateway' ? 'GatewaySubnet' : s.purpose === 'bastion' ? 'AzureBastionSubnet' : s.purpose === 'firewall' ? 'AzureFirewallSubnet' : ''),
+        cidr: s.cidr || '',
+        fixedName: ['gateway', 'bastion', 'firewall'].includes(s.purpose),
+        minPrefix: { gateway: 27, bastion: 26, firewall: 26 }[s.purpose] || 28,
+        autoName: s.autoName ?? !['gateway', 'bastion', 'firewall'].includes(s.purpose),
+        nsg: s.nsg ?? !['gateway', 'bastion', 'firewall'].includes(s.purpose),
+        routeTable: s.routeTable ?? !['gateway', 'bastion', 'firewall'].includes(s.purpose),
+        enabled: s.enabled !== false,
+      }));
+    }
+
+    // Save and validate
+    const result = await networkingConfig.saveConfig(merged);
+
+    return JSON.stringify({
+      message: 'Networking configuration updated successfully',
+      validation: result.validation,
+      config: result.config,
+    }, null, 2);
+  },
+
   async refresh_specs() {
     // Clear all caches
     specsCache = null;
@@ -879,6 +920,25 @@ export async function executeTool(toolName, toolInput) {
     console.error(`[ToolExecutor] Error executing ${toolName}:`, error.message);
     return JSON.stringify({ error: `Tool execution failed: ${error.message}` });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Deep merge utility (for networking config updates)
+// ---------------------------------------------------------------------------
+function deepMerge(target, source) {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (source[key] === undefined) continue;
+    if (
+      source[key] && typeof source[key] === 'object' && !Array.isArray(source[key]) &&
+      target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])
+    ) {
+      result[key] = deepMerge(target[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
 }
 
 export default { executeTool };

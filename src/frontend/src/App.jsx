@@ -5,6 +5,8 @@ import AiChat from './pages/AiChat';
 import Login from './pages/Login';
 import { getMe, logout, getToken, clearToken } from './lib/api';
 
+const APP_VERSION = '0.2.0';
+
 function Nav({ username, onLogout }) {
   const linkClass = ({ isActive }) =>
     `px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -21,10 +23,11 @@ function Nav({ username, onLogout }) {
             <span className="text-white text-lg font-bold tracking-tight">
               Inf-Dep-Gen
             </span>
+            <span className="text-gray-500 text-xs font-mono">v{APP_VERSION}</span>
           </div>
           <div className="flex items-center space-x-2">
             <NavLink to="/" className={linkClass} end>
-              Dashboard
+              Deployment
             </NavLink>
             <NavLink to="/chat" className={linkClass}>
               AI Assistant

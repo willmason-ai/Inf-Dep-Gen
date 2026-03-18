@@ -287,6 +287,111 @@ export const tools = [
   },
 
   // ==========================================================================
+  // Networking Configuration
+  // ==========================================================================
+  {
+    name: 'update_networking_config',
+    description: 'Update the networking configuration with information about existing or planned infrastructure. Use when the user describes their current network topology, provides resource IDs, CIDR ranges, or wants to set up networking for an AVS deployment. Accepts partial config — only provided fields are merged into the existing saved config.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        region: {
+          type: 'string',
+          description: 'Azure region (e.g., "eastus2", "westus2")',
+        },
+        resourceGroupName: {
+          type: 'string',
+          description: 'Resource group name for networking resources',
+        },
+        hubVnet: {
+          type: 'object',
+          description: 'Hub VNet configuration',
+          properties: {
+            name: { type: 'string', description: 'VNet name' },
+            addressSpaces: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'VNet address spaces in CIDR notation (e.g., ["10.0.0.0/16"])',
+            },
+          },
+        },
+        subnets: {
+          type: 'array',
+          description: 'Subnet definitions. Each must have purpose, name, and cidr.',
+          items: {
+            type: 'object',
+            properties: {
+              purpose: {
+                type: 'string',
+                enum: ['gateway', 'bastion', 'firewall', 'compute', 'management', 'custom'],
+              },
+              name: { type: 'string' },
+              cidr: { type: 'string' },
+              nsg: { type: 'boolean' },
+              routeTable: { type: 'boolean' },
+            },
+            required: ['purpose', 'cidr'],
+          },
+        },
+        connectivity: {
+          type: 'object',
+          description: 'Connectivity settings (ExpressRoute, Bastion, Firewall)',
+          properties: {
+            expressRouteGateway: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                sku: { type: 'string', enum: ['ErGw1AZ', 'ErGw2AZ', 'ErGw3AZ', 'UltraPerformance'] },
+              },
+            },
+            expressRouteConnection: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                circuitResourceId: { type: 'string' },
+                authorizationKey: { type: 'string' },
+              },
+            },
+            globalReach: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                onPremCircuitResourceId: { type: 'string' },
+                avsCircuitResourceId: { type: 'string' },
+              },
+            },
+            bastion: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                sku: { type: 'string', enum: ['Basic', 'Standard'] },
+              },
+            },
+            firewall: {
+              type: 'object',
+              properties: {
+                enabled: { type: 'boolean' },
+                sku: { type: 'string', enum: ['Standard', 'Premium'] },
+                threatIntelMode: { type: 'string', enum: ['Off', 'Alert', 'Deny'] },
+              },
+            },
+          },
+        },
+        ipAddressPlan: {
+          type: 'object',
+          description: 'IP address plan for overlap validation',
+          properties: {
+            avsBlock: { type: 'string', description: 'AVS /22 CIDR block' },
+            onPremRanges: { type: 'array', items: { type: 'string' } },
+            workloadVnetRanges: { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+      required: [],
+    },
+  },
+
+  // ==========================================================================
   // Cache Management
   // ==========================================================================
   {

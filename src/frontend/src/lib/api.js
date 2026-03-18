@@ -165,3 +165,61 @@ export const applyImport = (changes) =>
     method: 'POST',
     body: JSON.stringify({ changes }),
   });
+
+// ---------------------------------------------------------------------------
+// Naming Convention
+// ---------------------------------------------------------------------------
+export const getNamingConvention = () => fetchJSON('/naming-convention');
+
+export const saveNamingConvention = (convention) =>
+  fetchJSON('/naming-convention', {
+    method: 'POST',
+    body: JSON.stringify({ convention }),
+  });
+
+export const generateResourceName = (resourceType, values) =>
+  fetchJSON('/naming-convention/generate', {
+    method: 'POST',
+    body: JSON.stringify({ resourceType, values }),
+  });
+
+export const validateResourceName = (name, resourceType) =>
+  fetchJSON('/naming-convention/validate', {
+    method: 'POST',
+    body: JSON.stringify({ name, resourceType }),
+  });
+
+// ---------------------------------------------------------------------------
+// Networking
+// ---------------------------------------------------------------------------
+export const getNetworkingConfig = () => fetchJSON('/networking');
+
+export const saveNetworkingConfig = (config) =>
+  fetchJSON('/networking', {
+    method: 'POST',
+    body: JSON.stringify({ config }),
+  });
+
+export const validateNetworkingTopology = (config) =>
+  fetchJSON('/networking/validate', {
+    method: 'POST',
+    body: JSON.stringify({ config }),
+  });
+
+export const generateNetworkingBicep = () =>
+  fetchJSON('/networking/generate/bicep', { method: 'POST' });
+
+export const generateNetworkingArm = () =>
+  fetchJSON('/networking/generate/arm', { method: 'POST' });
+
+export const importNetworkingArm = (armTemplate) =>
+  fetchJSON('/networking/import', {
+    method: 'POST',
+    body: JSON.stringify({ armTemplate }),
+  });
+
+export const resetNetworkingConfig = (region) =>
+  fetchJSON('/networking/reset', {
+    method: 'POST',
+    body: JSON.stringify({ region }),
+  });

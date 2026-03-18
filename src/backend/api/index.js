@@ -9,6 +9,8 @@ import serversRouter from './servers.js';
 import aiRouter from './ai.js';
 import azureRouter from './azure.js';
 import importRouter from './import.js';
+import namingConventionRouter from './naming-convention.js';
+import networkingRouter from './networking.js';
 
 const router = Router();
 
@@ -19,9 +21,7 @@ router.use('/servers', serversRouter);
 router.use('/ai', aiRouter);
 router.use('/azure', azureRouter);
 router.use('/import', importRouter);
-
-// Future mounts:
-// router.use('/validate', validateRouter);
-// router.use('/logs', logsRouter);
+router.use('/naming-convention', namingConventionRouter);
+router.use('/networking', networkingRouter);
 
 export default router;

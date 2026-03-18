@@ -34,12 +34,15 @@ All environment-specific values are driven by environment variables:
 3. **NSG Rules** — Per-server Network Security Group definitions
 4. **Tag Scripts** — Apply required tags to VM and all resources
 5. **Validation Reports** — Spec vs. actual state diffs
+6. **Networking Bicep/ARM** — Hub VNet, subnets, ER Gateway, Bastion, Firewall, NSGs, route tables
 
 ## App Features
 - **Login** — Single-user auth, credentials from env vars
-- **Dashboard** — Server overview with spec details, generator buttons (ARM/LVM/NSG/Tags), Import Specs button
+- **Dashboard** — Collapsible sections: Naming Convention, Networking, Compute, AVS (placeholder), Excel Upload
+- **Networking** — Hub VNet topology planner with CIDR validation, IP plan overlap matrix, Bicep/ARM generation, ARM export import
+- **Compute** — Server overview with spec details, generator buttons (ARM/LVM/NSG/Tags)
 - **Excel Import** — Upload `.xlsx`, parse Compute + Storage BOM sheets, diff against Cosmos DB specs
-- **AI Chat** — Claude with tool calling, environment-aware planning, collapsible chat history sidebar
+- **AI Chat** — Claude with tool calling, environment-aware planning, collapsible chat history sidebar, networking config updates
 - **Azure Discovery** — Live resource discovery (VNets, VMs, disks, NSGs, NICs) via ARM SDK
 
 ## Hard Rules
@@ -55,14 +58,22 @@ All environment-specific values are driven by environment variables:
 - Disk sizes can never decrease
 - LVM scripts must never destroy existing data
 
+## Versioning
+- Semantic versioning (MAJOR.MINOR.PATCH)
+- Current: **v0.2.0**
+- Version displayed in nav bar (top-left), defined in `src/frontend/src/App.jsx` as `APP_VERSION`
+- Both `package.json` files must stay in sync
+- See `CHANGELOG.md` for release history
+
 ## Project Structure
 - `src/frontend/` — React 19 + Vite + Tailwind CSS
   - `src/frontend/src/pages/` — Login.jsx, Dashboard.jsx, AiChat.jsx
-  - `src/frontend/src/components/` — ChatSidebar.jsx, ChatMessage.jsx, ImportReview.jsx, ServerDetail.jsx, ArtifactViewer.jsx
+  - `src/frontend/src/components/` — NamingConvention.jsx, NetworkingConfig.jsx, ChatSidebar.jsx, ChatMessage.jsx, ImportReview.jsx, ServerDetail.jsx, ArtifactViewer.jsx
+  - `src/frontend/src/components/networking/` — CidrInput.jsx, SubnetEditor.jsx, ConnectivityCard.jsx
   - `src/frontend/src/lib/api.js` — API client with auth token management
 - `src/backend/` — Express.js (ES modules)
-  - `src/backend/api/` — Route handlers: auth.js, servers.js, ai.js, azure.js, import.js
-  - `src/backend/services/` — Business logic: excel-parser.js, spec-comparator.js, spec-parser.js, azure-discovery.js, arm-generator.js, lvm-generator.js, nsg-generator.js, tag-generator.js
+  - `src/backend/api/` — Route handlers: auth.js, servers.js, ai.js, azure.js, import.js, naming-convention.js, networking.js
+  - `src/backend/services/` — Business logic: excel-parser.js, spec-comparator.js, spec-parser.js, azure-discovery.js, arm-generator.js, lvm-generator.js, nsg-generator.js, tag-generator.js, naming-convention.js, networking-config.js, cidr-utils.js, bicep-generator.js
   - `src/backend/services/ai/` — Claude integration: chat-service.js, system-prompt.js, tool-definitions.js, tool-executor.js
   - `src/backend/middleware/` — auth.js (Bearer token), audit-logger.js, guardrails.js, error-handler.js
   - `src/backend/config/` — index.js (env vars), cosmos.js (Cosmos DB client)
